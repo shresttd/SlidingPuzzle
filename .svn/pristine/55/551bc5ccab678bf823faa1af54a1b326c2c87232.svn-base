@@ -1,0 +1,1058 @@
+package edu.wm.cs.cs301.slidingpuzzle;
+
+
+
+import java.math.*;
+import java.util.Arrays;
+import java.util.Random;
+
+public class SimplePuzzleState implements PuzzleState {
+	
+	private int [][] board;
+	
+	private SimplePuzzleState parent;
+    SimplePuzzleState newState;
+    SimplePuzzleState newRandomState;
+		
+	Operation operation; 
+	
+	int pathLength;   
+	int dimension;
+	
+	
+	public SimplePuzzleState() {
+	}
+	
+	public SimplePuzzleState(SimplePuzzleState parent, Operation operation, int pathLength, int dimension){     //constructor
+		this.board = new int[dimension][dimension]; 
+		
+		this.parent = parent;
+		this.operation = operation;
+		this.pathLength = pathLength + 1;
+		
+		this.dimension = dimension;
+	}	
+	
+	public SimplePuzzleState(SimplePuzzleState parent, int pathLength, int dimension){     //constructor for randomState
+		//dimension = dim;
+		this.board = new int[dimension][dimension]; 
+		
+		this.parent = parent;
+		this.pathLength = pathLength + 1;
+		
+		this.dimension = dimension;
+		
+		System.out.println(this.pathLength);
+	}	
+	
+	@Override
+	public void setToInitialState(int dimension, int numberOfEmptySlots) {      
+		
+		this.parent = null;
+		this.operation = null;
+		this.pathLength = 0;
+		
+		this.dimension = dimension;
+		
+		this.board = new int[dimension][dimension];
+		
+	    int row;
+	    int column;
+	    
+	    int len = dimension * dimension - numberOfEmptySlots;
+	    
+	    for (row = 0; row < dimension; row++) {
+			for (column = 0; column < dimension; column++) {
+				if (row * dimension + column < len) {
+					board[row][column] = row * dimension + column + 1;
+				}else {
+					board[row][column] = 0;
+				}
+			}
+	    }	
+	}
+	
+	@Override
+	public int getValue(int row, int column) {
+		return this.board[row][column];
+	}
+
+	@Override
+	public PuzzleState getParent() {    
+		return this.parent;
+	}
+
+	@Override
+	public Operation getOperation() {
+		
+		return this.operation;
+
+	}
+
+	@Override
+	public int getPathLength() {
+		// TODO Auto-generated method stub
+		return this.pathLength;
+	}
+
+	public PuzzleState move(int row, int column, Operation op) {
+		// TODO Auto-generated method stub
+	    
+		if (op == PuzzleState.Operation.MOVERIGHT){
+			
+		    int rightNeighborRow = row;
+		    int rightNeighborColumn = column + 1;
+		    
+	        if (insideBoard(rightNeighborRow, rightNeighborColumn) && isEmpty(rightNeighborRow, rightNeighborColumn)){  //right
+					   
+			    newState = new SimplePuzzleState(this, op, pathLength, this.dimension); 
+                
+			    newState.setToParentState(this);
+			    
+			    newState.moveToEmptyTile(row, column, rightNeighborRow, rightNeighborColumn);
+			    
+						    	
+		    }else{
+			    return null;
+		    }
+				    
+		}else if (op == PuzzleState.Operation.MOVELEFT){
+			int leftNeighborRow = row;
+		    int leftNeighborColumn = column - 1;
+		    
+			if ( insideBoard (leftNeighborRow, leftNeighborColumn) && isEmpty(leftNeighborRow, leftNeighborColumn)){ //left
+				
+				newState = new SimplePuzzleState(this, op, pathLength, this.dimension );
+			    newState.setToParentState(this);
+			    newState.moveToEmptyTile(row, column, leftNeighborRow, leftNeighborColumn);			
+				
+			}else{
+				return null;
+			}
+				    
+		}else if (op == PuzzleState.Operation.MOVEUP){	
+
+		    int topNeighborRow = row - 1;
+		    int topNeighborColumn = column;
+		    
+			if ( insideBoard(topNeighborRow, topNeighborColumn) && isEmpty(topNeighborRow, topNeighborColumn)){  //up
+		        
+				newState = new SimplePuzzleState(this, op, pathLength, this.dimension);
+			    newState.setToParentState(this);
+			    newState.moveToEmptyTile(row, column, topNeighborRow, topNeighborColumn);			
+
+			}else{
+				return null;
+			}
+				
+		}else if (op == PuzzleState.Operation.MOVEDOWN){
+			
+			int bottomNeighborRow = row + 1;
+		    int bottomNeighborColumn = column;
+		    
+			if ( insideBoard(bottomNeighborRow, bottomNeighborColumn) && isEmpty(bottomNeighborRow, bottomNeighborColumn)) {  //down
+
+				newState = new SimplePuzzleState(this, op, pathLength, this.dimension);			    
+			    newState.setToParentState(this);
+			    newState.moveToEmptyTile(row, column, bottomNeighborRow, bottomNeighborColumn);			
+				
+			}else{
+				return null;
+			}  
+		}
+		return newState;
+	}
+	
+	@Override
+	public PuzzleState flip(int startRow, int startColumn, int endRow, int endColumn) {
+
+		if (isAdjacentRight(startRow, startColumn, endRow, endColumn)){
+			return move(startRow, startColumn, PuzzleState.Operation.MOVERIGHT);
+			
+		}else if (isAdjacentLeft(startRow, startColumn, endRow, endColumn)){
+			return move(startRow, startColumn, PuzzleState.Operation.MOVELEFT);
+			
+		}else if (isAdjacentTop(startRow, startColumn, endRow, endColumn)){
+			return move(startRow, startColumn, PuzzleState.Operation.MOVEUP);
+			
+		}else if (isAdjacentBottom(startRow, startColumn, endRow, endColumn)){
+			return move(startRow, startColumn, PuzzleState.Operation.MOVEDOWN);
+		}
+		
+		else if (isAdjacentRightRight(startRow,startColumn, endRow, endColumn)){
+			this.move(startRow, startColumn, PuzzleState.Operation.MOVERIGHT);
+			return newState.move(startRow, startColumn + 1, PuzzleState.Operation.MOVERIGHT);
+			
+		}else if (isAdjacentLeftLeft(startRow,startColumn, endRow, endColumn)){
+			this.move(startRow, startColumn, PuzzleState.Operation.MOVELEFT);
+		    return newState.move(startRow, startColumn - 1, PuzzleState.Operation.MOVELEFT);
+			
+		}
+		else if (isAdjacentTopTop(startRow, startColumn, endRow, endColumn)){
+			this.move(startRow, startColumn, PuzzleState.Operation.MOVEUP);
+			return newState.move(startRow - 1, startColumn, PuzzleState.Operation.MOVEUP);
+		}
+		else if (isAdjacentBottomBottom(startRow, startColumn, endRow, endColumn)){
+			this.move(startRow, startColumn, PuzzleState.Operation.MOVEDOWN);
+			return newState.move(startRow + 1, startColumn, PuzzleState.Operation.MOVEDOWN);
+		}
+		
+		else if (isAdjacentRightRightRight(startRow, startColumn, endRow, endColumn)){
+			this.move(startRow, startColumn, PuzzleState.Operation.MOVERIGHT);
+			
+			PuzzleState x;
+			x = newState.move(startRow, startColumn + 1, PuzzleState.Operation.MOVERIGHT);
+			return x.move(startRow, startColumn + 2,  PuzzleState.Operation.MOVERIGHT);
+		}
+		
+		else if (isAdjacentLeftLeftLeft(startRow, startColumn, endRow, endColumn)){
+			this.move(startRow, startColumn, PuzzleState.Operation.MOVELEFT);
+			
+			PuzzleState x;
+			x = newState.move(startRow, startColumn - 1, PuzzleState.Operation.MOVELEFT);
+			return x.move(startRow, startColumn - 2,  PuzzleState.Operation.MOVELEFT);
+		}
+		else if (isAdjacentTopTopTop(startRow, startColumn, endRow, endColumn)){
+			this.move(startRow, startColumn, PuzzleState.Operation.MOVEUP);
+			PuzzleState x;
+			x = newState.move(startRow - 1, startColumn, PuzzleState.Operation.MOVEUP);
+			return x.move(startRow - 2, startColumn, PuzzleState.Operation.MOVEUP);
+			
+		}
+		else if (isAdjacentBottomBottomBottom(startRow, startColumn, endRow, endColumn)){
+			this.move(startRow,  startColumn,  PuzzleState.Operation.MOVEDOWN);
+			PuzzleState x;
+			x = newState.move(startRow + 1, startColumn, PuzzleState.Operation.MOVEDOWN);
+			return x.move(startRow + 2, startColumn, PuzzleState.Operation.MOVEDOWN);
+				
+		}
+		
+		else if (isAdjacentTopRight(startRow, startColumn, endRow, endColumn)){
+			if (isEmpty(startRow - 1, startColumn)) {
+			    this.move(startRow, startColumn, PuzzleState.Operation.MOVEUP);
+			    return newState.move(startRow - 1, startColumn, PuzzleState.Operation.MOVERIGHT);
+			}else if (isEmpty (startRow, startColumn + 1)){
+				this.move(startRow,  startColumn,  PuzzleState.Operation.MOVERIGHT);
+				return newState.move(startRow, startColumn + 1, PuzzleState.Operation.MOVEUP);
+			}
+		}
+		else if (isAdjacentTopLeft(startRow, startColumn, endRow, endColumn)){
+			if (isEmpty(startRow - 1, startColumn)) {
+			    this.move(startRow, startColumn, PuzzleState.Operation.MOVEUP);
+			    return newState.move(startRow - 1, startColumn, PuzzleState.Operation.MOVELEFT);
+			}else if (isEmpty (startRow, startColumn - 1)){
+				this.move(startRow,  startColumn,  PuzzleState.Operation.MOVELEFT);
+				return newState.move(startRow, startColumn - 1, PuzzleState.Operation.MOVEUP);
+			}
+		}
+		
+		else if (isAdjacentBottomRight(startRow,startColumn, endRow,endColumn)){
+			if (isEmpty(startRow + 1, startColumn)) {
+				this.move(startRow, startColumn, PuzzleState.Operation.MOVEDOWN);
+				return newState.move(startRow+1, startColumn, PuzzleState.Operation.MOVERIGHT);
+			}else if (isEmpty (startRow, startColumn + 1)){
+				this.move(startRow,  startColumn,  PuzzleState.Operation.MOVERIGHT);
+				return newState.move(startRow, startColumn + 1, PuzzleState.Operation.MOVEDOWN);
+			}
+		}
+		
+		else if (isAdjacentBottomLeft(startRow,startColumn, endRow,endColumn)){
+			if (isEmpty(startRow + 1, startColumn)) {
+				this.move(startRow, startColumn, PuzzleState.Operation.MOVEDOWN);
+				return newState.move(startRow + 1, startColumn, PuzzleState.Operation.MOVELEFT);
+			}else if (isEmpty (startRow, startColumn - 1)){
+				this.move(startRow,  startColumn,  PuzzleState.Operation.MOVELEFT);
+				return newState.move(startRow, startColumn - 1, PuzzleState.Operation.MOVEDOWN);
+			}
+		}
+		
+		else if (isAdjacentTopRightRight(startRow, startColumn, endRow, endColumn)){
+			if (isEmpty(startRow - 1, startColumn)){
+				this.move(startRow, startColumn, PuzzleState.Operation.MOVEUP);
+				PuzzleState x;
+				x = newState.move(startRow - 1, startColumn, PuzzleState.Operation.MOVERIGHT);
+				return x.move(startRow - 1, startColumn + 1, PuzzleState.Operation.MOVERIGHT);
+				
+			}else if (isEmpty(startRow, startColumn + 1)){
+				if (isEmpty(startRow, startColumn + 2)){
+					this.move(startRow, startColumn, PuzzleState.Operation.MOVERIGHT);
+					PuzzleState x;
+					x = newState.move(startRow,  startColumn + 1, PuzzleState.Operation.MOVERIGHT);
+					return x.move(startRow, startColumn +2, PuzzleState.Operation.MOVEUP);
+				}else if (isEmpty(startRow - 1, startColumn + 1)){
+					this.move(startRow, startColumn, PuzzleState.Operation.MOVERIGHT);
+					PuzzleState x;
+					x = newState.move(startRow,  startColumn + 1, PuzzleState.Operation.MOVEUP);
+					return x.move(startRow - 1, startColumn + 1, PuzzleState.Operation.MOVERIGHT);
+					
+				}
+			}
+			
+		}else if ( isAdjacentTopLeftLeft(startRow, startColumn, endRow, endColumn)){
+			if (isEmpty(startRow - 1, startColumn)){
+				this.move(startRow, startColumn, PuzzleState.Operation.MOVEUP);
+				PuzzleState x;
+				x = newState.move(startRow - 1, startColumn, PuzzleState.Operation.MOVELEFT);
+				return x.move(startRow - 1, startColumn - 1, PuzzleState.Operation.MOVELEFT);
+				
+			}else if (isEmpty(startRow, startColumn - 1)){
+				if (isEmpty(startRow, startColumn - 2)){
+					this.move(startRow, startColumn, PuzzleState.Operation.MOVELEFT);
+					PuzzleState x;
+					x = newState.move(startRow,  startColumn - 1, PuzzleState.Operation.MOVELEFT);
+					return x.move(startRow, startColumn - 2, PuzzleState.Operation.MOVEUP);
+				}else if (isEmpty(startRow - 1, startColumn - 1)){
+					this.move(startRow, startColumn, PuzzleState.Operation.MOVELEFT);
+					PuzzleState x;
+					x = newState.move(startRow,  startColumn - 1, PuzzleState.Operation.MOVEUP);
+					return x.move(startRow - 1, startColumn - 1, PuzzleState.Operation.MOVELEFT);
+					
+				}
+			}
+			
+		}else if (isAdjacentBottomRightRight(startRow, startColumn, endRow, endColumn)){
+			if (isEmpty(startRow + 1, startColumn)){
+				this.move(startRow, startColumn, PuzzleState.Operation.MOVEDOWN);
+				PuzzleState x;
+				x = newState.move(startRow + 1, startColumn, PuzzleState.Operation.MOVERIGHT);
+				return x.move(startRow + 1, startColumn + 1, PuzzleState.Operation.MOVERIGHT);
+				
+			}else if (isEmpty(startRow, startColumn + 1)){
+				if (isEmpty(startRow, startColumn + 2)){
+					this.move(startRow, startColumn, PuzzleState.Operation.MOVERIGHT);
+					PuzzleState x;
+					x = newState.move(startRow,  startColumn + 1, PuzzleState.Operation.MOVERIGHT);
+					return x.move(startRow, startColumn + 2, PuzzleState.Operation.MOVEDOWN);
+				}else if (isEmpty(startRow + 1, startColumn + 1)){
+					this.move(startRow, startColumn, PuzzleState.Operation.MOVERIGHT);
+					PuzzleState x;
+					x = newState.move(startRow,  startColumn + 1, PuzzleState.Operation.MOVEDOWN);
+					return x.move(startRow + 1, startColumn + 1, PuzzleState.Operation.MOVERIGHT);
+					
+				}
+			}
+		}else if ( isAdjacentBottomLeftLeft(startRow, startColumn, endRow, endColumn)){
+			if (isEmpty(startRow + 1, startColumn)){
+				this.move(startRow, startColumn, PuzzleState.Operation.MOVEDOWN);
+				PuzzleState x;
+				x = newState.move(startRow + 1, startColumn, PuzzleState.Operation.MOVELEFT);
+				return x.move(startRow + 1, startColumn - 1, PuzzleState.Operation.MOVELEFT);
+				
+			}else if (isEmpty(startRow, startColumn - 1)){
+				if (isEmpty(startRow, startColumn - 2)){
+					this.move(startRow, startColumn, PuzzleState.Operation.MOVELEFT);
+					PuzzleState x;
+					x = newState.move(startRow,  startColumn - 1, PuzzleState.Operation.MOVELEFT);
+					return x.move(startRow, startColumn - 2, PuzzleState.Operation.MOVEDOWN);
+				}else if (isEmpty(startRow + 1, startColumn - 1)){
+					this.move(startRow, startColumn, PuzzleState.Operation.MOVELEFT);
+					PuzzleState x;
+					x = newState.move(startRow,  startColumn - 1, PuzzleState.Operation.MOVEDOWN);
+					return x.move(startRow + 1, startColumn - 1, PuzzleState.Operation.MOVELEFT);
+				}
+			}
+			
+		}else if (isAdjacentTopTopRight(startRow, startColumn, endRow, endColumn)){
+			if (isEmpty(startRow, startColumn + 1)){
+				this.move(startRow, startColumn, PuzzleState.Operation.MOVERIGHT);
+				PuzzleState x;
+				x = newState.move(startRow, startColumn + 1, PuzzleState.Operation.MOVEUP);
+				return x.move(startRow - 1, startColumn + 1, PuzzleState.Operation.MOVEUP);
+				
+			}else if (isEmpty(startRow - 1, startColumn)){
+				if (isEmpty(startRow - 2, startColumn)){
+					this.move(startRow, startColumn, PuzzleState.Operation.MOVEUP);
+					PuzzleState x;
+					x = newState.move(startRow - 1,  startColumn, PuzzleState.Operation.MOVEUP);
+					return x.move(startRow - 2, startColumn, PuzzleState.Operation.MOVERIGHT);
+				}else if (isEmpty(startRow - 1, startColumn + 1)){
+					this.move(startRow, startColumn, PuzzleState.Operation.MOVEUP);
+					PuzzleState x;
+					x = newState.move(startRow - 1,  startColumn, PuzzleState.Operation.MOVERIGHT);
+					return x.move(startRow - 1, startColumn + 1, PuzzleState.Operation.MOVEUP);
+					
+				}
+			}
+		}
+		else if (isAdjacentTopTopLeft(startRow, startColumn, endRow, endColumn)){
+			if (isEmpty(startRow, startColumn - 1)){
+				this.move(startRow, startColumn, PuzzleState.Operation.MOVELEFT);
+				PuzzleState x;
+				x = newState.move(startRow, startColumn - 1, PuzzleState.Operation.MOVEUP);
+				return x.move(startRow - 1, startColumn - 1, PuzzleState.Operation.MOVEUP);
+				
+			}else if (isEmpty(startRow - 1, startColumn)){
+				if (isEmpty(startRow - 2, startColumn)){
+					this.move(startRow, startColumn, PuzzleState.Operation.MOVEUP);
+					PuzzleState x;
+					x = newState.move(startRow - 1,  startColumn, PuzzleState.Operation.MOVEUP);
+					return x.move(startRow - 2, startColumn, PuzzleState.Operation.MOVELEFT);
+				}else if (isEmpty(startRow - 1, startColumn - 1)){
+					this.move(startRow, startColumn, PuzzleState.Operation.MOVEUP);
+					PuzzleState x;
+					x = newState.move(startRow - 1,  startColumn, PuzzleState.Operation.MOVELEFT);
+					return x.move(startRow - 1, startColumn - 1, PuzzleState.Operation.MOVEUP);
+				}
+			}
+		}
+		else if (isAdjacentBottomBottomRight(startRow, startColumn, endRow, endColumn)){
+			if (isEmpty(startRow, startColumn + 1)){
+				this.move(startRow, startColumn, PuzzleState.Operation.MOVERIGHT);
+				PuzzleState x;
+				x = newState.move(startRow, startColumn + 1, PuzzleState.Operation.MOVEDOWN);
+				return x.move(startRow + 1, startColumn + 1, PuzzleState.Operation.MOVEDOWN);
+				
+			}else if (isEmpty(startRow + 1, startColumn)){
+				if (isEmpty(startRow + 2, startColumn)){
+					this.move(startRow, startColumn, PuzzleState.Operation.MOVEDOWN);
+					PuzzleState x;
+					x = newState.move(startRow + 1,  startColumn, PuzzleState.Operation.MOVEDOWN);
+					return x.move(startRow + 2, startColumn, PuzzleState.Operation.MOVERIGHT);
+				}else if (isEmpty(startRow + 1, startColumn + 1)){
+					this.move(startRow, startColumn, PuzzleState.Operation.MOVEDOWN);
+					PuzzleState x;
+					x = newState.move(startRow + 1,  startColumn, PuzzleState.Operation.MOVERIGHT);
+					return x.move(startRow + 1, startColumn + 1, PuzzleState.Operation.MOVEDOWN);
+					
+				}
+			}
+		}
+		else if (isAdjacentBottomBottomLeft(startRow, startColumn, endRow, endColumn)){
+			if (isEmpty(startRow, startColumn - 1)){
+				this.move(startRow, startColumn, PuzzleState.Operation.MOVELEFT);
+				PuzzleState x;
+				x = newState.move(startRow, startColumn - 1, PuzzleState.Operation.MOVEDOWN);
+				return x.move(startRow + 1, startColumn - 1, PuzzleState.Operation.MOVEDOWN);
+				
+			}else if (isEmpty(startRow + 1, startColumn)){
+				if (isEmpty(startRow + 2, startColumn)){
+					this.move(startRow, startColumn, PuzzleState.Operation.MOVEDOWN);
+					PuzzleState x;
+					x = newState.move(startRow + 1,  startColumn, PuzzleState.Operation.MOVEDOWN);
+					return x.move(startRow + 2, startColumn, PuzzleState.Operation.MOVELEFT);
+				}else if (isEmpty(startRow + 1, startColumn - 1)){
+					this.move(startRow, startColumn, PuzzleState.Operation.MOVEDOWN);
+					PuzzleState x;
+					x = newState.move(startRow + 1,  startColumn, PuzzleState.Operation.MOVELEFT);
+					return x.move(startRow + 1, startColumn - 1, PuzzleState.Operation.MOVEDOWN);
+					
+				}
+			}
+		}
+	
+		return null;
+	}
+	
+	private boolean isAdjacentRight(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow && endColumn == startColumn + 1){
+			return true;
+		}
+		return false;
+	}
+	
+	private boolean isAdjacentRightRight(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow && endColumn == startColumn + 2){
+			if (isEmpty(startRow, startColumn + 1)){
+				return true;
+			}
+		}return false;
+	}
+	
+	private boolean isAdjacentRightRightRight(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow && endColumn == startColumn + 3){
+			if (isEmpty(startRow, startColumn + 2)){
+				if (isEmpty(startRow, startColumn + 1)){
+					return true;
+				}
+			}			
+		}return false;
+	}
+	
+	private boolean isAdjacentLeft(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow && endColumn == startColumn - 1){
+			return true;
+		}
+		return false;
+	}
+	
+	private boolean isAdjacentLeftLeft(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow && endColumn == startColumn - 2){
+			if (isEmpty(startRow, startColumn - 1)){
+				return true;
+			}
+		}return false;
+	}
+	
+	private boolean isAdjacentLeftLeftLeft(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow && endColumn == startColumn - 3){
+			if (isEmpty(startRow, startColumn - 2)){
+				if (isEmpty(startRow, startColumn - 1)){
+				    return true;
+				}
+			}
+		}return false;
+	}
+	
+	private boolean isAdjacentTop(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow - 1 && endColumn == startColumn){
+			return true;
+		}
+		return false;
+	}
+	private boolean isAdjacentTopTop(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow - 2 && endColumn == startColumn){
+			if (isEmpty(startRow - 1, startColumn)){
+				return true;
+			}
+		}return false;
+	}
+	
+	private boolean isAdjacentTopTopTop(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow - 3 && endColumn == startColumn){
+			if (isEmpty(startRow - 2, startColumn)){
+				if (isEmpty(startRow - 1, startColumn)){
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	
+	
+	
+	private boolean isAdjacentBottom(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow + 1 && endColumn == startColumn){
+			return true;
+		}
+		return false;
+	}
+	private boolean isAdjacentBottomBottom(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow + 2 && endColumn == startColumn){
+			if (isEmpty(startRow + 1, startColumn)){
+				return true;
+			}
+		}return false;
+	}
+	
+	private boolean isAdjacentBottomBottomBottom(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow + 3 && endColumn == startColumn){
+			if (isEmpty(startRow + 2, startColumn)){
+				if (isEmpty(startRow + 1, startColumn)){
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	private boolean isAdjacentTopRight(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow - 1 && endColumn == startColumn + 1){
+			if ( isEmpty(startRow - 1, startColumn) ){
+				return true;
+				
+			}else if (isEmpty(startRow, startColumn + 1)){
+				return true;
+			}
+		}return false;
+	}
+	
+	private boolean isAdjacentTopLeft(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow - 1 && endColumn == startColumn - 1){
+			if ( isEmpty(startRow - 1, startColumn) ){
+				return true;
+				
+			}else if (isEmpty(startRow, startColumn - 1)){
+				return true;
+			}
+		}return false;
+	}
+	
+	
+	private boolean isAdjacentBottomRight(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow + 1 && endColumn == startColumn + 1){
+			if ( isEmpty(startRow + 1, startColumn)) {
+				return true;
+			}else if (isEmpty(startRow, startColumn + 1)){
+				return true;
+		    }
+		}
+		return false;
+	}
+	
+	private boolean isAdjacentBottomLeft(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow + 1 && endColumn == startColumn - 1){
+			if ( isEmpty(startRow + 1, startColumn)) {
+				return true;
+			}else if (isEmpty(startRow, startColumn - 1)){
+				return true;
+		    }
+		}
+		return false;
+	}
+	
+	private boolean isAdjacentTopRightRight(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow - 1 && endColumn == startColumn + 2){
+			if (isEmpty(startRow - 1, startColumn)){  //top
+				if (isEmpty(startRow - 1, startColumn + 1)){  //top right
+					return true;
+				}
+			}else if (isEmpty(startRow, startColumn + 1))	{
+				if (isEmpty(startRow, startColumn + 2)){
+					return true;
+				}else if (isEmpty(startRow - 1, startColumn + 1)){
+					return true;
+				}
+			}
+		}return false;
+	}
+	private boolean isAdjacentTopLeftLeft(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow - 1 && endColumn == startColumn - 2){
+			if (isEmpty(startRow - 1, startColumn)){  //top
+				if (isEmpty(startRow - 1, startColumn - 1)){  //top right
+					return true;
+				}
+			}else if (isEmpty(startRow, startColumn - 1))	{
+				if (isEmpty(startRow, startColumn - 2)){
+					return true;
+				}else if (isEmpty(startRow - 1, startColumn - 1)){
+					return true;
+				}
+			}
+		}return false;
+	}
+	
+	private boolean isAdjacentBottomRightRight(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow + 1 && endColumn == startColumn + 2){
+			if (isEmpty(startRow + 1, startColumn)){  //top
+				if (isEmpty(startRow + 1, startColumn + 1)){  //top right
+					return true;
+				}
+			}else if (isEmpty(startRow, startColumn + 1))	{
+				if (isEmpty(startRow, startColumn + 2)){
+					return true;
+				}else if (isEmpty(startRow + 1, startColumn + 1)){
+					return true;
+				}
+			}
+		}return false;
+	}
+	
+	private boolean isAdjacentBottomLeftLeft(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow + 1 && endColumn == startColumn - 2){
+			if (isEmpty(startRow + 1, startColumn)){  //top
+				if (isEmpty(startRow + 1, startColumn - 1)){  //top right
+					return true;
+				}
+			}else if (isEmpty(startRow, startColumn - 1))	{
+				if (isEmpty(startRow, startColumn - 2)){
+					return true;
+				}else if (isEmpty(startRow + 1, startColumn - 1)){
+					return true;
+				}
+			}
+		}return false;
+	}
+	
+	private boolean isAdjacentTopTopRight(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow - 2 && endColumn == startColumn + 1){
+			if (isEmpty(startRow, startColumn + 1)){  //top
+				if (isEmpty(startRow - 1, startColumn + 1)){  //top right
+					return true;
+				}
+			}else if (isEmpty(startRow - 1, startColumn))	{
+				if (isEmpty(startRow - 2, startColumn)){
+					return true;
+				}else if (isEmpty(startRow - 1, startColumn + 1)){
+					return true;
+				}
+			}
+		}return false;
+	}
+	
+	private boolean isAdjacentTopTopLeft(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow - 2 && endColumn == startColumn - 1){
+			if (isEmpty(startRow, startColumn - 1)){  //top
+				if (isEmpty(startRow - 1, startColumn - 1)){  //top right
+					return true;
+				}
+			}else if (isEmpty(startRow - 1, startColumn))	{
+				if (isEmpty(startRow - 2, startColumn)){
+					return true;
+				}else if (isEmpty(startRow - 1, startColumn - 1)){
+					return true;
+				}
+			}
+		}return false;
+	}
+	
+	private boolean isAdjacentBottomBottomRight(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow + 2 && endColumn == startColumn + 1){
+			if (isEmpty(startRow, startColumn + 1)){  //top
+				if (isEmpty(startRow + 1, startColumn + 1)){  //top right
+					return true;
+				}
+			}else if (isEmpty(startRow + 1, startColumn))	{
+				if (isEmpty(startRow + 2, startColumn)){
+					return true;
+				}else if (isEmpty(startRow + 1, startColumn + 1)){
+					return true;
+				}
+			}
+		}return false;
+	}
+	
+	private boolean isAdjacentBottomBottomLeft(int startRow, int startColumn, int endRow, int endColumn){
+		if (endRow == startRow + 2 && endColumn == startColumn - 1){
+			if (isEmpty(startRow, startColumn - 1)){  //top
+				if (isEmpty(startRow + 1, startColumn - 1)){  //top right
+					return true;
+				}
+			}else if (isEmpty(startRow + 1, startColumn))	{
+				if (isEmpty(startRow + 2, startColumn)){
+					return true;
+				}else if (isEmpty(startRow + 1, startColumn - 1)){
+					return true;
+				}
+			}
+		}return false;
+	}
+
+	@Override	
+	public PuzzleState shuffleBoard(int pathLength) {
+		
+		SimplePuzzleState current = this;
+		
+		int rightRow;
+		int rightColumn;
+		
+		int leftRow;
+		int leftColumn;
+		
+		int topRow;
+		int topColumn;
+		
+		int bottomRow;
+		int bottomColumn;
+		
+		int i;
+
+		for (i = 0; i < pathLength; i++){
+			
+		    int one = 0;
+		    int two = 1;
+		    int three = 2;
+		    //int four = 3;
+			
+		    
+			rightRow = current.findEmptyRow();
+			rightColumn = current.findEmptyColumn() + 1;
+				
+			leftRow = current.findEmptyRow();
+			leftColumn = current.findEmptyColumn() - 1;
+				
+			topRow = current.findEmptyRow() - 1;
+			topColumn = current.findEmptyColumn();
+				
+			bottomRow = current.findEmptyRow() + 1;
+			bottomColumn = current.findEmptyRow(); 
+			
+			int lotto = current.lottery();
+
+		     if (lotto == one) {
+                 
+		    	 if (isValid(leftRow, leftColumn)){
+	    	         current = (SimplePuzzleState) current.move(leftRow, leftColumn,  PuzzleState.Operation.MOVERIGHT);
+	    	         
+		    	 }if (isValid(topRow, topColumn)){
+	    	         current = (SimplePuzzleState) current.move(topRow, topColumn,  PuzzleState.Operation.MOVEDOWN);
+   		 
+
+	             }else if (isValid(bottomRow, bottomColumn)){
+	            	 current = (SimplePuzzleState) current.move(bottomRow, bottomColumn, PuzzleState.Operation.MOVEUP);
+	        		
+	    	     }else{ //if (isValid(rightRow, rightColumn)){
+	    	         current = (SimplePuzzleState) current.move(rightRow, rightColumn, PuzzleState.Operation.MOVELEFT);
+	             } 
+	            	
+		        
+		     }else if (lotto == two) {
+
+	             if (isValid(bottomRow, bottomColumn)){
+	            	 current = (SimplePuzzleState) current.move(bottomRow, bottomColumn, PuzzleState.Operation.MOVEUP);
+	             
+	             }else if (isValid(topRow, topColumn)){
+			             current = (SimplePuzzleState) current.move(topRow, topColumn,  PuzzleState.Operation.MOVEDOWN);
+				 
+		         }else if (isValid(leftRow, leftColumn)){
+			             current = (SimplePuzzleState) current.move(leftRow, leftColumn,  PuzzleState.Operation.MOVERIGHT);  
+		          	
+	             }else { //if (isValid(rightRow, rightColumn)){
+		    	     current = (SimplePuzzleState) current.move(rightRow, rightColumn, PuzzleState.Operation.MOVELEFT);
+	             }
+		            
+	         }else if (lotto == three) {
+	        	 
+	             if (isValid(topRow, topColumn)){
+		             current = (SimplePuzzleState) current.move(topRow, topColumn,  PuzzleState.Operation.MOVEDOWN);
+		             
+	             } else if (isValid(leftRow, leftColumn)){
+		             current = (SimplePuzzleState) current.move(leftRow, leftColumn,  PuzzleState.Operation.MOVERIGHT);
+	             
+	             } else if (isValid(rightRow, rightColumn)){
+			         current = (SimplePuzzleState) current.move(rightRow, rightColumn, PuzzleState.Operation.MOVELEFT);
+			            
+	             }else{ //if (isValid(bottomRow, bottomColumn)){
+	                 current = (SimplePuzzleState) current.move(bottomRow, bottomColumn, PuzzleState.Operation.MOVEUP);
+	            
+	             }
+	         }else{
+	        	 if (isValid(rightRow, rightColumn)){
+			         current = (SimplePuzzleState) current.move(rightRow, rightColumn, PuzzleState.Operation.MOVELEFT);  
+	             
+		         } else if (isValid(leftRow, leftColumn)){
+		             current = (SimplePuzzleState) current.move(leftRow, leftColumn,  PuzzleState.Operation.MOVERIGHT);
+
+	    	     }else if (isValid(topRow, topColumn)){
+		             current = (SimplePuzzleState) current.move(topRow, topColumn,  PuzzleState.Operation.MOVEDOWN);	
+		             
+	             } else { // if (isValid(bottomRow, bottomColumn)){
+	    	         current = (SimplePuzzleState) current.move(bottomRow, bottomColumn, PuzzleState.Operation.MOVEUP);
+			
+	    	     }
+	         }
+	    
+    	}
+	
+		
+		return current;		
+	}
+	
+	public PuzzleState randomMove(int row, int column, Operation op) {
+	    
+		if (op == PuzzleState.Operation.MOVERIGHT){
+			
+		    int rightNeighborRow = row;
+		    int rightNeighborColumn = column - 1;
+		    
+	        randomMoveMethod(row, column, op, rightNeighborRow, rightNeighborColumn);
+				    
+		}else if (op == PuzzleState.Operation.MOVELEFT){
+			int leftNeighborRow = row;
+		    int leftNeighborColumn = column + 1;
+		    
+			randomMoveMethod(row, column, op, leftNeighborRow, leftNeighborColumn);
+				    
+		}else if (op == PuzzleState.Operation.MOVEUP){	
+
+		    int topNeighborRow = row + 1;
+		    int topNeighborColumn = column;
+		    
+			randomMoveMethod(row, column, op, topNeighborRow, topNeighborColumn);
+				
+		}else if (op == PuzzleState.Operation.MOVEDOWN){
+			
+			int bottomNeighborRow = row - 1;
+		    int bottomNeighborColumn = column;
+		    
+			randomMoveMethod(row, column, op, bottomNeighborRow, bottomNeighborColumn);  
+		}
+		return newState;
+	}
+
+	private void randomMoveMethod(int row, int column, Operation op, int bottomNeighborRow, int bottomNeighborColumn) {
+		if ( insideBoard(bottomNeighborRow, bottomNeighborColumn) && !(isEmpty(bottomNeighborRow, bottomNeighborColumn))) {  //down
+
+			newState = new SimplePuzzleState(this, op, pathLength, this.dimension);			    
+		    newState.setToParentState(this);
+		    newState.moveToEmptyTile(bottomNeighborRow, bottomNeighborColumn, row, column);			
+			
+		}else{
+		    randomMove(row, column, randomOperation(lottery()));
+		}
+	}
+	private Operation randomOperation(int lotto){
+		if (lotto == 1){
+			return PuzzleState.Operation.MOVERIGHT;
+					
+		}else if (lotto == 2){
+			return PuzzleState.Operation.MOVELEFT;
+			
+		}else if (lotto == 3){
+			return PuzzleState.Operation.MOVEUP;
+			
+		}else{
+			return PuzzleState.Operation.MOVEDOWN;
+		}
+	}
+	private SimplePuzzleState randomizeBoard(int r, int c, int lotto){
+		if (lotto == 1){ 										//moving right tile to empty slot
+			this.moveToEmptyTile(r, c + 1, r, c);
+		}else if (lotto == 2){ 									//move left tile to empty slot
+			this.moveToEmptyTile(r, c - 1, r, c);
+
+		}else if(lotto == 3){ 									//top to empty
+			this.moveToEmptyTile(r - 1, c, r, c);
+
+		}else{  												//bottom to empty
+			this.moveToEmptyTile(r + 1, c, r, c);
+
+		}
+		return this;
+	}
+	
+    
+	@Override
+	public boolean isEmpty(int row, int column) {
+		return this.board[row][column] == 0;
+	}
+
+	@Override
+	public PuzzleState getStateWithShortestPath() {
+		SimplePuzzleState newPuzzleState = this;
+		return newPuzzleState;
+	}
+	
+	@Override
+    public boolean equals(Object state){    	
+    	
+    	if (this == state) {
+    		return true;
+    	}
+    	
+    	else if (state == null) {
+    		return false;
+    	}
+    	
+    	else if (!(state instanceof SimplePuzzleState)) {        
+    		return false;
+    	}
+    	
+    	SimplePuzzleState other = (SimplePuzzleState) state;
+
+    	if (this.board == null && other.board == null){
+    		return true;
+    	}
+    	
+    	if (this.board != null && other.board == null ){ 
+    	    return false; 
+    	}
+    	
+    	if (this.board == null && other.board != null){
+    		return false;
+    	}
+    	
+    	if (this.compareEachTile(other)) {
+    		return true;
+    	}
+    	
+		return false;
+	}  
+	
+	@Override
+	public int hashCode(){
+				
+	    int row;
+	    int column;
+	    
+	    final int prime = 31;
+	    int result = 1;
+	    
+		for (row = 0; row < dimension; row++){
+			for (column = 0; column < dimension; column++){
+				result = prime * result + board[row][column];
+			}
+		}
+		
+		return result;
+	}
+	
+	private boolean insideBoard(int row, int column){
+		return row >= 0 && row < dimension && column >= 0 && column < dimension;
+	}
+	
+	private void moveToEmptyTile(int row, int column, int neighborRow, int neighborColumn){
+		
+		if (insideBoard(neighborRow, neighborColumn) && insideBoard(row, column)) {
+		int temp = this.board[row][column];
+		this.board[row][column] = this.board[neighborRow][neighborColumn];
+		this.board[neighborRow][neighborColumn] = temp;
+		}
+	}
+	
+	private void setToParentState(SimplePuzzleState parent){        
+		int r;
+		int c;
+		
+		for (r = 0; r < dimension; r++) {
+			for(c = 0; c < dimension; c++) {
+				this.board[r][c] = parent.board[r][c];
+			}
+		}	
+	}
+	
+	private boolean compareEachTile(SimplePuzzleState state){
+		int row;
+	    int column;
+	
+	    for (row = 0; row < dimension; row++){
+	    	for(column = 0; column < dimension; column++){
+	    		if (this.board[row][column] != state.board[row][column]) {
+	    			return false;
+	    		}
+	       	}
+	    }
+	    return true;
+	}
+	
+	private int lottery(){
+		
+		Random random = new Random();
+		
+		random.setSeed(1);
+				
+        int lotto = random.nextInt(4);
+        return lotto;
+
+	}
+	
+	private int findEmptyRow() {
+		int r;
+		int c;
+		
+		for (r = 0; r < dimension; r++) {
+			for (c = 0; c < dimension; c++){
+				if (this.board[r][c] == 0){
+					return r;
+		        }
+			}
+		}
+		return 0;
+	}
+	
+	private int findEmptyColumn(){
+	
+		int r;
+		int c;
+		
+		for (r = 0; r < dimension; r++) {
+			for (c = 0; c < dimension; c++){
+				if (this.board[r][c] == 0){
+					return c;
+				}
+			}
+		}   
+		return 0;
+	}
+	
+	private boolean isValid(int row, int column){
+		if (insideBoard(row, column) && !isEmpty(row, column)){
+			return true;
+		}
+		return false;
+	}
+	
+}
+
+
+

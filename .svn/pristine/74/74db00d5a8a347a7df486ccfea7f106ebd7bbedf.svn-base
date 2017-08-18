@@ -1,0 +1,165 @@
+package edu.wm.cs.cs301.slidingpuzzle;
+
+public class SimplePuzzleState implements PuzzleState {
+	
+	private class Board{
+		
+	    private class Tile {
+			
+		    private Integer row;
+		    private Integer column;
+		    private String face; //something else.
+		
+	    	public Tile(Integer r, Integer c, String f) {
+	    		row = r;
+	    		column = c;
+	    		face = f;			
+	    	}
+	    }
+	    
+		private Tile[][] board;
+		private Tile[][] prev;
+		private Tile[][] next;
+		public Board(){ 
+			board = new Tile[4][4];
+			newBoard();
+			
+			this.prev = null;
+			this.next = null;
+					
+		}
+		
+		public void newBoard(){
+			Integer r;
+			Integer c;
+			String f;
+
+			for (r = 0; r < 4; r++){
+				for (c = 0; c < 4; c++){
+					board[r][c] = new Tile(r, c, f);
+				}
+			}
+		}
+	
+	}
+	
+	Board state;
+	private Board header;
+	private Board trailer;
+	
+	public SimplePuzzleState() { 
+		this.header = new Board();
+		this.trailer = new Board();
+		state = new Board();
+		
+		this.header.next = state;
+		state.next = this.trailer.next;
+		
+		
+		
+		// TODO constructor
+		
+				
+	}
+	
+	private class Tile{
+		private Integer row;
+		private Integer column;
+		
+		public Tile(){
+			
+		}
+	}
+	
+	Integer [][] board;
+	Integer face;
+		
+	public SimplePuzzleState(){
+		board = new Integer[4][4];
+				
+	}
+	
+	@Override
+	public void setToInitialState(int dimension, int numberOfEmptySlots) {
+// always as\square
+	    Integer rows;
+	    Integer columns;
+	    
+	    for (rows = 0; rows < dimension; rows++) {
+	    	for (columns = 0; columns < dimension; columns++) {
+	    		if (rows == dimension - 1 && columns == dimension -1){
+	    			face = null;
+	    		}else{
+	    		    face = rows * dimension + columns + 1;    		
+	    	}
+	    }
+	    
+	    		
+	// TODO Auto-generated method stub
+	
+
+	}
+
+	@Override
+	public int getValue(int row, int column) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public PuzzleState getParent() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Operation getOperation() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public int getPathLength() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public PuzzleState move(int row, int column, Operation op) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public PuzzleState flip(int startRow, int startColumn, int endRow, int endColumn) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public PuzzleState shuffleBoard(int pathLength) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isEmpty(int row, int column) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	
+	public boolean isEmpty(Integer face) { //face param
+	    if (face == null){
+	    }    return true;
+	}
+
+	@Override
+	public PuzzleState getStateWithShortestPath() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}
+
+
+

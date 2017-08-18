@@ -1,0 +1,351 @@
+package edu.wm.cs.cs301.slidingpuzzle;
+
+import static org.junit.Assert.assertEquals;
+
+import java.math.*;
+import java.util.Arrays;
+import java.util.Random;
+
+public class SimplePuzzleState implements PuzzleState {
+	
+	private int [][] board;
+	
+	SimplePuzzleState parent;
+    SimplePuzzleState newState;
+		
+	Operation operation; 
+	
+	int pathLength;   
+	int dimension = 4;
+	
+	public SimplePuzzleState() {
+		// TODO Auto-generated constructor stub
+	}
+	
+	public SimplePuzzleState(SimplePuzzleState parent, Operation operation, int pathLength){     //constructor
+		//dimension = dim;
+		this.board = new int[dimension][dimension]; ///could be problem
+		
+		this.parent = parent;
+		this.operation = operation;
+		this.pathLength = pathLength + 1;
+		
+	}	
+		
+	@Override
+	public void setToInitialState(int dimension, int numberOfEmptySlots) {      //just use { { 1, 2, 3, 4}. {5,6,7,8} }?
+		
+		
+		this.parent = null;
+		this.operation = null;
+		this.pathLength = 0;
+		
+		this.board = new int[dimension][dimension];
+		
+	    int row;
+	    int column;
+	    
+	    int len = dimension * dimension - numberOfEmptySlots;
+	    
+	    for (row = 0; row < dimension; row++) {
+			for (column = 0; column < dimension; column++) {
+				if (row * dimension + column < len) {
+					board[row][column] = row * dimension + column + 1;
+				}else {
+					board[row][column] = 0;
+				}
+			}
+	    }	
+	}
+	
+	@Override
+	public int getValue(int row, int column) {
+		// TODO Auto-generated method stub
+		return this.board[row][column];
+	}
+
+	@Override
+	public PuzzleState getParent() {    
+		// TODO Auto-generated method stub
+		return this.parent;
+	}
+
+	@Override
+	public Operation getOperation() {
+		// TODO Auto-generated method stub
+		//return null;
+		return this.operation;
+
+	}
+
+	@Override
+	public int getPathLength() {
+		// TODO Auto-generated method stub
+		return this.pathLength;
+	}
+
+	public PuzzleState move(int row, int column, Operation op) {
+		// TODO Auto-generated method stub
+	    
+		if (op == PuzzleState.Operation.MOVERIGHT){
+			
+		    int rightNeighborRow = row;
+		    int rightNeighborColumn = column + 1;
+		    
+	        if (insideBoard(rightNeighborRow, rightNeighborColumn) && isEmpty(rightNeighborRow, rightNeighborColumn)){  //right
+					   
+			    newState = new SimplePuzzleState(this, op, pathLength); 
+                
+			    newState.setToParentState(this);
+			    
+			    newState.moveToEmptyTile(row, column, rightNeighborRow, rightNeighborColumn);
+			    
+			   /* int r;
+				int c;
+				for (r = 0; r < dimension; r++){
+					for (c = 0; c < dimension; c++){
+						//newState.face = this.face;
+						newState.board[r][c] = this.face;
+					}
+				}*/
+				//newState.moveToEmptyTile(row, column, emptyNeighborRow, emptyNeighborColumn);				
+				    	
+		    }else{
+			    return null;
+		    }
+				    
+		}else if (op == PuzzleState.Operation.MOVELEFT){
+			int leftNeighborRow = row;
+		    int leftNeighborColumn = column - 1;
+		    
+			if ( insideBoard (leftNeighborRow, leftNeighborColumn) && isEmpty(leftNeighborRow, leftNeighborColumn)){ //left
+				
+				newState = new SimplePuzzleState(this, op, pathLength );
+			    newState.setToParentState(this);
+			    newState.moveToEmptyTile(row, column, leftNeighborRow, leftNeighborColumn);			
+				
+			}else{
+				return null;
+			}
+				    
+		}else if (op == PuzzleState.Operation.MOVEUP){	
+
+		    int topNeighborRow = row - 1;
+		    int topNeighborColumn = column;
+		    
+			if ( insideBoard(topNeighborRow, topNeighborColumn) && isEmpty(topNeighborRow, topNeighborColumn)){  //up
+		        
+				newState = new SimplePuzzleState(this, op, pathLength);
+			    newState.setToParentState(this);
+			    newState.moveToEmptyTile(row, column, topNeighborRow, topNeighborColumn);			
+
+			}else{
+				return null;
+			}
+				
+		}else if (op == PuzzleState.Operation.MOVEDOWN){
+			
+			int bottomNeighborRow = row + 1;
+		    int bottomNeighborColumn = column;
+		    
+			if ( insideBoard(bottomNeighborRow, bottomNeighborColumn) && isEmpty(bottomNeighborRow, bottomNeighborColumn)) {  //down
+
+				newState = new SimplePuzzleState(this, op, pathLength);			    
+			    newState.setToParentState(this);
+			    newState.moveToEmptyTile(row, column, bottomNeighborRow, bottomNeighborColumn);			
+				
+			}else{
+				return null;
+			}  
+		}
+		return newState;
+	}
+	
+	@Override
+	public PuzzleState flip(int startRow, int startColumn, int endRow, int endColumn) {
+		// TODO Auto-generated method stub
+		
+		/*if (isAdjacent)
+		    this.move(startRow, startColumn, MOVERIGHT)
+		elif (isAdjacent2)
+		
+		elif (isAdjacent3)
+		
+		*/
+		return null;
+	}
+
+	@Override	
+	public PuzzleState shuffleBoard(int pathLength) {
+
+		SimplePuzzleState randomizedState;
+		randomizedState = new SimplePuzzleState();
+		
+		int i;		
+        for (i = 0; i < pathLength; i++) {
+        	randomizedState.randomizeBoard();
+        	
+        }
+        return randomizedState;
+	}
+
+	@Override
+	public boolean isEmpty(int row, int column) {
+		// TODO Auto-generated method stub		
+		return this.board[row][column] == 0;
+	}
+
+	@Override
+	public PuzzleState getStateWithShortestPath() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	@Override
+    public boolean equals(Object state){    	
+    	
+    	if (this == state) {
+    		return true;
+    	}
+    	
+    	else if (state == null) {
+    		return false;
+    	}
+    	
+    	else if (!(state instanceof SimplePuzzleState)) {        /// Example vs Object?
+    		return false;
+    	}
+    	
+    	SimplePuzzleState other = (SimplePuzzleState) state;
+
+    	if (this.board == null && other.board == null){
+    		return true;
+    	}
+    	
+    	if (this.board != null && other.board == null ){ //if one has board and the other doesn't
+    	    return false; 
+    	}
+    	
+    	if (this.board == null && other.board != null){
+    		return false;
+    	}
+    	
+    	if (this.compareEachTile(other)) {
+    		return true;
+    	}
+    	
+		return false;
+	}  
+	
+	@Override
+	public int hashCode(){
+				
+	    int row;
+	    int column;
+	    
+	    final int prime = 31;
+	    int result = 1;
+	    
+		//return (int) this.board * ()//function * face     //ya?         // Array.hashcode(myObject)
+		for (row = 0; row < dimension; row++){
+			for (column = 0; column < dimension; column++){
+				result = prime * result + board[row][column];
+			}
+		}
+		
+		return result;
+	}
+	
+	private boolean insideBoard(int row, int column){
+		return row >= 0 && row < dimension && column >= 0 && column < dimension;
+	}
+	
+	private void moveToEmptyTile(int row, int column, int neighborRow, int neighborColumn){
+		int temp = this.board[row][column];
+		this.board[row][column] = this.board[neighborRow][neighborColumn];
+		this.board[neighborRow][neighborColumn] = temp;
+	}
+	
+	private void setToParentState(SimplePuzzleState parent){        
+		int r;
+		int c;
+		
+		for (r = 0; r < dimension; r++) {
+			for(c = 0; c < dimension; c++) {
+				this.board[r][c] = parent.board[r][c];
+			}
+		}	
+	}
+	
+	private boolean compareEachTile(SimplePuzzleState state){
+		int row;
+	    int column;
+	
+	    for (row = 0; row < dimension; row++){
+	    	for(column = 0; column < dimension; column++){
+	    		if (this.board[row][column] != state.board[row][column]) {
+	    		//if (this.getValue(row, column) != state.getValue(row,  column)) {
+	    			return false;
+	    		}
+	       	}
+	    }
+	    return true;
+	}
+	
+	private void randomizeBoard(){
+
+		Operation randomOperation;		
+        Random random;
+
+		randomOperation = null; 
+		random = new Random();
+        
+        randomOperation = Operation.values()[random.nextInt(Operation.values().length)];
+        
+        int possibleRows [] = {0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3 };
+        int possibleColumns [] = {0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3 };
+        
+        int randomRow = new Random().nextInt(possibleRows.length);
+        int randomColumn = new Random().nextInt(possibleColumns.length);
+        
+        while (! (hasEmptyNeighbor(randomRow, randomColumn) ) ){
+        	randomRow = new Random().nextInt(possibleRows.length);
+        	randomColumn = new Random().nextInt(possibleColumns.length);       
+        }
+        
+        while (this.move(randomRow, randomColumn, randomOperation) == null ) {
+    		randomOperation = Operation.values()[random.nextInt(Operation.values().length)];      
+        }	
+        
+        this.move(randomRow, randomColumn, randomOperation);
+        	
+	}
+	
+	private boolean hasEmptyNeighbor(int row, int column){
+	    int rightNeighborRow = row;
+	    int rightNeighborColumn = column + 1;
+	    
+	    int leftNeighborRow = row;
+	    int leftNeighborColumn = column - 1;
+	    
+	    int topNeighborRow = row - 1;
+	    int topNeighborColumn = column;
+		
+		int bottomNeighborRow = row + 1;
+	    int bottomNeighborColumn = column;
+	    
+        if (insideBoard(rightNeighborRow, rightNeighborColumn) && isEmpty(rightNeighborRow, rightNeighborColumn)) {
+        	return true;
+        }else if (insideBoard(leftNeighborRow, leftNeighborColumn) && isEmpty(leftNeighborRow, leftNeighborColumn)) {
+        	return true;
+        }else if (insideBoard(topNeighborRow, topNeighborColumn) && isEmpty(topNeighborRow, topNeighborColumn)) {
+        	return true;
+        }else if (insideBoard(bottomNeighborRow, bottomNeighborColumn) && isEmpty(bottomNeighborRow, bottomNeighborColumn)) {
+        	return true;
+        }
+	    return false;
+	}
+}
+
+
+
